@@ -3,7 +3,7 @@
 /**
  * A simple PHP class for working with Universally Unique Identifiers (UUIDs).
  *
- * @version 1.0.0
+ * @version 1.1.0
  * @author Jon Stovell http://jon.stovell.info
  * @copyright 2023 Jon Stovell
  * @license MIT
@@ -28,6 +28,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
+declare(strict_types = 1);
 
 namespace Sesquipedalian;
 
@@ -394,12 +396,17 @@ class Uuid implements \Stringable
 	 *    instance of this class for the nil UUID will be created.
 	 *  - If $strict is true, a fatal error will be triggered.
 	 *
-	 * @param string $input A UUID string. May be compressed or uncompressed.
+	 * @param \Stringable|string $input A UUID string. May be compressed or
+	 *    uncompressed.
 	 * @param bool $strict If set to true, invalid input causes a fatal error.
 	 * @return object A Uuid object.
 	 */
-	public static function createFromString(string $input, bool $strict = false): object
+	public static function createFromString(\Stringable|string $input, bool $strict = false): object
 	{
+		if ($input instanceof self) {
+			return $input;
+		}
+
 		// Binary format is 16 bytes long.
 		// Short format is 22 bytes long.
 		// Full format is 32 bytes long, once extraneous characters are removed.
@@ -431,11 +438,12 @@ class Uuid implements \Stringable
 	/**
 	 * Convenience method to get the binary or short form of a UUID string.
 	 *
-	 * @param string $input A UUID string. May be compressed or uncompressed.
+	 * @param \Stringable|string $input A UUID string. May be compressed or
+	 *    uncompressed.
 	 * @param bool $to_base64 If true, compress to short form. Default: false.
 	 * @return string The short form of the UUID string.
 	 */
-	public static function compress(string $input, bool $to_base64 = false): string
+	public static function compress(\Stringable|string $input, bool $to_base64 = false): string
 	{
 		$uuid = self::createFromString($input);
 
@@ -445,10 +453,11 @@ class Uuid implements \Stringable
 	/**
 	 * Convenience method to get the full form of a UUID string.
 	 *
-	 * @param string $input A UUID string. May be compressed or uncompressed.
+	 * @param \Stringable|string $input A UUID string. May be compressed or
+	 *    uncompressed.
 	 * @return string The full form of the input.
 	 */
-	public static function expand(string $input): string
+	public static function expand(\Stringable|string $input): string
 	{
 		return self::createFromString($input)->uuid;
 	}
@@ -488,15 +497,15 @@ class Uuid implements \Stringable
 	 *
 	 * See RFC 4122, section 4.3.
 	 *
-	 * @param bool|string $ns Either a valid UUID string, true to forcibly
+	 * @param \Stringable|string|bool $ns Either a valid UUID, true to forcibly
 	 *    reset to the automatically generated default value, or false to use
 	 *    the current value (which will be set to the default if undefined).
 	 *    Default: false.
 	 */
-	public static function setNamespace(bool|string $ns = false): void
+	public static function setNamespace(\Stringable|string|bool $ns = false): void
 	{
 		// Manually supplied namespace.
-		if (is_string($ns)) {
+		if (is_string($ns) || $ns instanceof \Stringable) {
 			self::$namespace = self::createFromString($ns, true)->getBinary();
 			return;
 		}
