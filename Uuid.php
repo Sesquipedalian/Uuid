@@ -89,16 +89,6 @@ class Uuid implements \Stringable
 	public const SUPPORTED_VERSIONS = [0, 1, 2, 3, 4, 5, 6, 7, 15];
 
 	/**
-	 * UUID versions that use timestamps.
-	 */
-	public const TIME_BASED_VERSIONS = [1, 6, 7];
-
-	/**
-	 * UUID versions that hash input strings.
-	 */
-	public const HASH_BASED_VERSIONS = [3, 5];
-
-	/**
 	 * The special nil UUID.
 	 */
 	public const NIL_UUID = '00000000-0000-0000-0000-000000000000';
@@ -207,9 +197,9 @@ class Uuid implements \Stringable
 	 * Constructor.
 	 *
 	 * Handling of the $input parameter varies depending on the $verion:
-	 *  - For hash-based UUIDs, $input is a string to hash.
-	 *  - For time-based UUIDs, $input can be a Unix timestamp, a date string,
-	 *    or null to use 'now'.
+	 *  - For UUIDv3 and UUIDv5, $input is a string to hash.
+	 *  - For UUIDv1, UUIDv6, and UUIDv7, $input can be a Unix timestamp, a date
+	 *    string, or null to use 'now'.
 	 *  - For UUIDv2, an array listing the domain type, local identifer, and
 	 *    optional time value.
 	 *  - Otherwise, $input is ignored.
@@ -253,13 +243,13 @@ class Uuid implements \Stringable
 				break;
 		}
 
-		if (in_array($this->version, self::HASH_BASED_VERSIONS) && !isset($input)) {
+		if (in_array($this->version, [3, 5]) && !isset($input)) {
 			trigger_error('UUIDv' . $this->version . ' requires string input, but none was provided.', E_USER_WARNING);
 			$this->version = 0;
 		}
 
 		// For time-based formats, we need a timestamp.
-		if (in_array($this->version, self::TIME_BASED_VERSIONS)) {
+		if (in_array($this->version, [1, 6, 7])) {
 			$this->setTimestamp($input ?? 'now');
 		}
 
