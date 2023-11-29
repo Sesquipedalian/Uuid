@@ -200,8 +200,8 @@ class Uuid implements \Stringable
 	 *  - For UUIDv3 and UUIDv5, $input is a string to hash.
 	 *  - For UUIDv1, UUIDv6, and UUIDv7, $input can be a Unix timestamp, a date
 	 *    string, or null to use 'now'.
-	 *  - For UUIDv2, an array listing the domain type, local identifer, and
-	 *    optional time value.
+	 *  - For UUIDv2, an array containing a 'domain' element and optional 'id'
+	 *    and 'timestamp' elements. (See $this->getHexV2() for more info.)
 	 *  - Otherwise, $input is ignored.
 	 *
 	 * In general, using an arbitrary timestamp to create a time-based UUID is
@@ -636,14 +636,9 @@ class Uuid implements \Stringable
 	 */
 	protected function getHexV2(array $input): string
 	{
-		// No string keys?
-		if (array_is_list($input)) {
-			list($domain, $id, $timestamp) = array_pad($input, 3, null);
-		} else {
-			$domain = $input['domain'] ?? 0;
-			$id = $input['id'] ?? null;
-			$timestamp = $input['timestamp'] ?? null;
-		}
+		$domain = $input['domain'] ?? 0;
+		$id = $input['id'] ?? null;
+		$timestamp = $input['timestamp'] ?? null;
 
 		if ($domain < 0) {
 			$this->version = 0;
