@@ -248,14 +248,9 @@ class Uuid implements \Stringable
 			$this->version = 0;
 		}
 
-		// For time-based formats, we need a timestamp.
-		if (in_array($this->version, [1, 6, 7])) {
-			$this->setTimestamp($input ?? 'now');
-		}
-
 		switch ($this->version) {
 			case 1:
-				$hex = $this->getHexV1();
+				$hex = $this->getHexV1($input);
 				break;
 
 			case 2:
@@ -275,11 +270,11 @@ class Uuid implements \Stringable
 				break;
 
 			case 6:
-				$hex = $this->getHexV6();
+				$hex = $this->getHexV6($input);
 				break;
 
 			case 7:
-				$hex = $this->getHexV7();
+				$hex = $this->getHexV7($input);
 				break;
 
 			case 15:
@@ -569,10 +564,12 @@ class Uuid implements \Stringable
 	 * network card's MAC address) or a random value. In this implementation,
 	 * both values are initialized with random values each time the script runs.
 	 *
+	 * @param \Stringable|string|int|float|null $input Timestamp or date string.
 	 * @return string 32 hexadecimal digits.
 	 */
-	protected function getHexV1(): string
+	protected function getHexV1(\Stringable|string|int|float|null $input): string
 	{
+		$this->setTimestamp($input);
 		$parts = $this->getGregTimeParts();
 
 		// Date out of range? Bail out.
@@ -757,10 +754,12 @@ class Uuid implements \Stringable
 	 * network card's MAC address) or a random value. In this implementation,
 	 * both values are initialized with random values each time the script runs.
 	 *
+	 * @param \Stringable|string|int|float|null $input Timestamp or date string.
 	 * @return string 32 hexadecimal digits.
 	 */
-	protected function getHexV6(): string
+	protected function getHexV6(\Stringable|string|int|float|null $input): string
 	{
+		$this->setTimestamp($input);
 		$parts = $this->getGregTimeParts();
 
 		// Date out of range? Bail out.
@@ -782,10 +781,12 @@ class Uuid implements \Stringable
 	 *
 	 * Uniqueness is ensured by appending 74 random bits to the timestamp.
 	 *
+	 * @param \Stringable|string|int|float|null $input Timestamp or date string.
 	 * @return string 32 hexadecimal digits.
 	 */
-	protected function getHexV7(): string
+	protected function getHexV7(\Stringable|string|int|float|null $input): string
 	{
+		$this->setTimestamp($input);
 		$timestamp = $this->adjustTimestamp();
 
 		// Date out of range? Bail out.
@@ -859,10 +860,13 @@ class Uuid implements \Stringable
 	/**
 	 * Sets $this->timestamp to a microsecond-precision Unix timestamp.
 	 *
-	 * @param string|float $input A timestamp or date string. Default: 'now'.
+	 * @param \Stringable|string|int|float $input A timestamp or date string.
+	 *    Default: 'now'.
 	 */
-	protected function setTimestamp(string|float $input = 'now'): void
+	protected function setTimestamp(\Stringable|string|int|float|null $input = 'now'): void
 	{
+		$input = (string) $input;
+
 		if ($input === 'now') {
 			$this->timestamp = (float) microtime(true);
 		} else {
