@@ -248,6 +248,7 @@ class Uuid implements \Stringable
 			$this->version = 0;
 		}
 
+		// Generate hexadecimal value.
 		switch ($this->version) {
 			case 1:
 				$hex = $this->getHexV1($input);
@@ -287,6 +288,8 @@ class Uuid implements \Stringable
 				break;
 		}
 
+		// Format in full form.
+		// Special checks for nil and max in case of errors during generation.
 		switch ($hex) {
 			case '00000000000000000000000000000000':
 				$this->version = 0;
@@ -365,9 +368,9 @@ class Uuid implements \Stringable
 	 *
 	 * @param int $version The UUID version to create.
 	 * @param mixed $input Input for the UUID generator, if applicable.
-	 * @return object A new Uuid object.
+	 * @return Uuid A new Uuid object.
 	 */
-	public static function create(?int $version = null, mixed $input = null): object
+	public static function create(?int $version = null, mixed $input = null): Uuid
 	{
 		return new self($version, $input);
 	}
@@ -384,9 +387,9 @@ class Uuid implements \Stringable
 	 * @param \Stringable|string $input A UUID string. May be compressed or
 	 *    uncompressed.
 	 * @param bool $strict If set to true, invalid input causes a fatal error.
-	 * @return object A Uuid object.
+	 * @return Uuid A Uuid object.
 	 */
-	public static function createFromString(\Stringable|string $input, bool $strict = false): object
+	public static function createFromString(\Stringable|string $input, bool $strict = false): Uuid
 	{
 		if ($input instanceof self) {
 			return $input;
