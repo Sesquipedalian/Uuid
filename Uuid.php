@@ -929,8 +929,7 @@ class Uuid implements \Stringable
 			case 1:
 			case 2:
 			case 6:
-				$timestamp += 12219292800;
-				$timestamp *= 10000000;
+				$timestamp = (int) ($timestamp * 10000000) + 122192928000000000;
 				break;
 
 			// For v7, use millisecond precision.
