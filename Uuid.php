@@ -514,7 +514,20 @@ class Uuid implements \Stringable
 		}
 
 		// Host.
-		$host = $_SERVER['SERVER_NAME'] ?? $_SERVER['HTTP_HOST'] ?? $_SERVER['HOST_NAME'] ?? php_uname('n');
+		$host = $_SERVER['SERVER_NAME'] ?? $_SERVER['HTTP_HOST'] ?? $_SERVER['HOST_NAME'] ?? (is_callable('gethostname') ? gethostname() : false);
+
+		if (!$host)
+		{
+			// Last ditch workaround if gethostname() failed.
+			if (is_callable('phpinfo')) {
+				ob_start();
+				phpinfo(INFO_GENERAL);
+				$host = hash('sha512', ob_get_contents()) . '.local';
+				ob_get_clean();
+			} else {
+				trigger_error("Cannot create namespace UUID. Please enable PHP's gethostname() function to fix this.", E_USER_ERROR);
+			}
+		}
 
 		// Path.
 		$path = $_SERVER['SCRIPT_NAME'] ?? (isset($_SERVER['REQUEST_URI']) ? substr($_SERVER['REQUEST_URI'], -strlen(($_SERVER['QUERY_STRING'] ?? '') . ($_SERVER['PATH_INFO'] ?? ''))) : null);
