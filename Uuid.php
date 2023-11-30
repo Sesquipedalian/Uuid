@@ -162,18 +162,21 @@ class Uuid implements \Stringable
 	protected static string $namespace;
 
 	/**
-	 * @var int
+	 * @var array
 	 *
-	 * The last adjusted timestamp used.
+	 * The previously used timestamps for UUIDv1 and UUIDv6.
 	 */
-	protected static int $last_timestamp = 0;
+	protected static array $prev_timestamps = [
+		1 => [],
+		6 => [],
+	];
 
 	/**
-	 * @var string
+	 * @var array
 	 *
-	 * The "clock sequence" value used in UUIDv1 and UUIDv6.
+	 * The "clock sequence" values used for UUIDv1 and UUIDv6.
 	 */
-	protected static string $clock_seq;
+	protected static array $clock_seq = [];
 
 	/**
 	 * @var string
@@ -817,9 +820,11 @@ class Uuid implements \Stringable
 
 		// We can't track the clock sequence between executions, so initialize
 		// it to a random value each time. See RFC 4122, section 4.1.5.
-		if (!isset(self::$clock_seq)) {
-			self::$clock_seq = bin2hex(random_bytes(2));
+		if (!isset(self::$clock_seq[$this->version])) {
+			self::$clock_seq[$this->version] = bin2hex(random_bytes(2));
 		}
+
+		$clock_seq = self::$clock_seq[$this->version];
 
 		// We don't have direct access to the MAC address in PHP, but the spec
 		// allows using random data instead, provided that we set the least
@@ -828,15 +833,32 @@ class Uuid implements \Stringable
 			self::$node = sprintf('%012x', hexdec(bin2hex(random_bytes(6))) | 0x10000000000);
 		}
 
-		// If necessary, increment $clock_seq.
-		if (isset(self::$last_timestamp) && self::$last_timestamp >= $timestamp) {
-			self::$clock_seq = hexdec(self::$clock_seq);
-			self::$clock_seq++;
-			self::$clock_seq %= 0x10000;
-			self::$clock_seq = sprintf('%04x', self::$clock_seq);
+		// Is this a duplicate timestamp?
+		while (
+			isset(self::$prev_timestamps[$this->version][$clock_seq])
+			&& in_array($timestamp, self::$prev_timestamps[$this->version][$clock_seq])
+		) {
+			// First try incrementing the timestamp.
+			// Because the spec uses 100-nanosecond intervals, but PHP offers
+			// only microseconds, the spec says we can do this to simulate
+			// greater precision. See RFC 4122, section 4.2.1.2.
+			$temp = $timestamp;
+			for ($i = 0; $i < 9; $i++) {
+				if (!in_array(++$temp, self::$prev_timestamps[$this->version][$clock_seq])) {
+					$timestamp = $temp;
+					break 2;
+				}
+			}
+
+			// All available slots for this microsecond were taken.
+			// Increment $clock_seq and try again.
+			$clock_seq = hexdec($clock_seq);
+			$clock_seq++;
+			$clock_seq %= 0x10000;
+			self::$clock_seq[$this->version] = $clock_seq = sprintf('%04x', $clock_seq);
 		}
 
-		self::$last_timestamp = max($timestamp, self::$last_timestamp);
+		self::$prev_timestamps[$this->version][$clock_seq][] = $timestamp;
 
 		// Date out of range? Bail out.
 		if ($timestamp < 0) {
@@ -855,7 +877,7 @@ class Uuid implements \Stringable
 			'time_high' => substr($time_hex, 0, 3),
 			'time_mid' => substr($time_hex, 3, 4),
 			'time_low' => substr($time_hex, 7, 8),
-			'clock_seq' => self::$clock_seq,
+			'clock_seq' => $clock_seq,
 			'node' => self::$node,
 		];
 	}
