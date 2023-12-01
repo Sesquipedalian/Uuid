@@ -200,11 +200,12 @@ class Uuid implements \Stringable
 	 * Constructor.
 	 *
 	 * Handling of the $input parameter varies depending on the $verion:
-	 *  - For UUIDv3 and UUIDv5, $input is a string to hash.
-	 *  - For UUIDv1, UUIDv6, and UUIDv7, $input can be a Unix timestamp, a date
-	 *    string, or null to use 'now'.
-	 *  - For UUIDv2, an array containing a 'domain' element and optional 'id'
-	 *    and 'timestamp' elements. (See $this->getHexV2() for more info.)
+	 *  - For v3 and v5, $input must be a string or \Stringable object to hash.
+	 *  - For v1, v6, and v7, $input can be a Unix timestamp, a parsable
+	 *    date string, a \DateTimeInterface object, or null to use current time.
+	 *  - For v2, $input must be an array containing a 'domain' element and
+	 *    optional 'id' and 'timestamp' elements. (See $this->getHexV2() for
+	 *    more info.)
 	 *  - Otherwise, $input is ignored.
 	 *
 	 * In general, using an arbitrary timestamp to create a time-based UUID is
@@ -229,6 +230,17 @@ class Uuid implements \Stringable
 
 		// Check the input.
 		switch (gettype($input)) {
+			// Convert supported object types to strings.
+			case 'object':
+				if ($input instanceof \DateTimeInterface) {
+					$input = $input->format('Y-m-d H:i:s.u e');
+				} elseif ($input instanceof \Stringable) {
+					$input = (string) $input;
+				} else {
+					$input = null;
+				}
+				break;
+
 			// UUIDv2 wants an array, but nothing else does.
 			case 'array':
 				$input = $this->version !== 2 ? reset($input) : $input;
