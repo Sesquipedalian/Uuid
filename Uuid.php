@@ -3,7 +3,7 @@
 /**
  * A simple PHP class for working with Universally Unique Identifiers (UUIDs).
  *
- * @version 1.1.0
+ * @version 1.2.0
  * @author Jon Stovell http://jon.stovell.info
  * @copyright 2023 Jon Stovell
  * @license MIT
@@ -29,7 +29,7 @@
  * SOFTWARE.
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Sesquipedalian;
 
@@ -73,6 +73,26 @@ namespace Sesquipedalian;
  *    from pre-existing data, but will not be stored permanently. The generation
  *    algorithm for UUIDv5 always produces the same output given the same input,
  *    so these UUIDs can be regenerated any number of times without varying.
+ *
+ * At the time of writing, the specifications for the different UUID versions
+ * are defined in the following documents:
+ *
+ *  - UUIDv1: RFC 4122
+ *  - UUIDv2: DCE 1.1 Authentication and Security Services
+ *  - UUIDv3: RFC 4122
+ *  - UUIDv4: RFC 4122
+ *  - UUIDv5: RFC 4122
+ *  - UUIDv6: draft-ietf-uuidrev-rfc4122bis
+ *  - UUIDv7: draft-ietf-uuidrev-rfc4122bis
+ *  - UUIDv8: draft-ietf-uuidrev-rfc4122bis
+ *  - "Nil" UUID: RFC 4122
+ *  - "Max" UUID: draft-ietf-uuidrev-rfc4122bis
+ *
+ * These documents are available at the following URLs:
+ *
+ * - https://datatracker.ietf.org/doc/rfc4122/
+ * - https://pubs.opengroup.org/onlinepubs/9696989899/chap5.htm#tagcjh_08_02_01_01
+ * - https://datatracker.ietf.org/doc/draft-ietf-uuidrev-rfc4122bis/
  */
 class Uuid implements \Stringable
 {
@@ -87,6 +107,14 @@ class Uuid implements \Stringable
 	 * Versions 0 and 15 refer to the special nil and max UUIDs.
 	 */
 	public const SUPPORTED_VERSIONS = [0, 1, 2, 3, 4, 5, 6, 7, 15];
+
+	/**
+	 * UUID versions that this class will recognize as valid.
+	 *
+	 * Versions 0 and 15 refer to the special nil and max UUIDs.
+	 * Version 8 is for "experimental or vender-specific use cases."
+	 */
+	public const KNOWN_VERSIONS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 15];
 
 	/**
 	 * The special nil UUID.
@@ -428,8 +456,25 @@ class Uuid implements \Stringable
 			$hex = '00000000000000000000000000000000';
 		}
 
+		// Validate the version.
+		$version = hexdec(substr($hex, 12, 1));
+
+		if (
+			// Unknown version.
+			!in_array($version, self::KNOWN_VERSIONS)
+			// Version can be 0 only in Nil UUID.
+			|| ($version === 0 && $hex !== '00000000000000000000000000000000')
+			// Version can be 15 only in Max UUID.
+			|| ($version === 15 && $hex !== 'ffffffffffffffffffffffffffffffff')
+		) {
+			trigger_error("Invalid UUID string supplied: {$input}", $strict ? E_USER_ERROR : E_USER_WARNING);
+
+			$hex = '00000000000000000000000000000000';
+			$version = 0;
+		}
+
 		$obj = new self();
-		$obj->version = hexdec(substr($hex, 12, 1));
+		$obj->version = $version;
 		$obj->uuid = implode('-', [
 			substr($hex, 0, 8),
 			substr($hex, 8, 4),
@@ -539,8 +584,7 @@ class Uuid implements \Stringable
 		// Host.
 		$host = $_SERVER['SERVER_NAME'] ?? $_SERVER['HTTP_HOST'] ?? $_SERVER['HOST_NAME'] ?? (is_callable('gethostname') ? gethostname() : false);
 
-		if (!$host)
-		{
+		if (!$host) {
 			// Last ditch workaround if gethostname() failed.
 			if (is_callable('phpinfo')) {
 				ob_start();
@@ -629,7 +673,6 @@ class Uuid implements \Stringable
 	 * RFC 4122 does not describe this version. It just reserves UUIDv2 for
 	 * "DCE Security version." Instead the specification for UUIDv2 can be found
 	 * in the DCE 1.1 Authentication and Security Services specification.
-	 * https://pubs.opengroup.org/onlinepubs/9696989899/chap5.htm#tagcjh_08_02_01_01
 	 *
 	 * The purpose of UUIDv2 is to embed information not only about where and
 	 * when the UUID was created (via the node ID and timestamp), but also by
