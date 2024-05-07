@@ -5,10 +5,10 @@
  *
  * @version 1.2.0
  * @author Jon Stovell http://jon.stovell.info
- * @copyright 2023 Jon Stovell
+ * @copyright 2024 Jon Stovell
  * @license MIT
  *
- * Copyright (c) 2023 Jon Stovell
+ * Copyright (c) 2024 Jon Stovell
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -34,7 +34,7 @@ declare(strict_types=1);
 namespace Sesquipedalian;
 
 /**
- * Generates, compresses, and expands Univerally Unique Identifers.
+ * Generates, compresses, and expands Universally Unique Identifiers.
  *
  * This class can generate UUIDs of versions 1 through 7.
  *
@@ -74,25 +74,11 @@ namespace Sesquipedalian;
  *    algorithm for UUIDv5 always produces the same output given the same input,
  *    so these UUIDs can be regenerated any number of times without varying.
  *
- * At the time of writing, the specifications for the different UUID versions
- * are defined in the following documents:
+ * The specification for UUIDv2 is DCE 1.1 Authentication and Security Services
+ * https://pubs.opengroup.org/onlinepubs/9696989899/chap5.htm#tagcjh_08_02_01_01
  *
- *  - UUIDv1: RFC 4122
- *  - UUIDv2: DCE 1.1 Authentication and Security Services
- *  - UUIDv3: RFC 4122
- *  - UUIDv4: RFC 4122
- *  - UUIDv5: RFC 4122
- *  - UUIDv6: draft-ietf-uuidrev-rfc4122bis
- *  - UUIDv7: draft-ietf-uuidrev-rfc4122bis
- *  - UUIDv8: draft-ietf-uuidrev-rfc4122bis
- *  - "Nil" UUID: RFC 4122
- *  - "Max" UUID: draft-ietf-uuidrev-rfc4122bis
- *
- * These documents are available at the following URLs:
- *
- * - https://datatracker.ietf.org/doc/rfc4122/
- * - https://pubs.opengroup.org/onlinepubs/9696989899/chap5.htm#tagcjh_08_02_01_01
- * - https://datatracker.ietf.org/doc/draft-ietf-uuidrev-rfc4122bis/
+ * The specifications for all other UUID versions are defined in RFC 9562
+ * https://www.rfc-editor.org/info/rfc9562
  */
 class Uuid implements \Stringable
 {
@@ -142,7 +128,7 @@ class Uuid implements \Stringable
 	public const NAMESPACE_OID = '6ba7b812-9dad-11d1-80b4-00c04fd430c8';
 
 	/**
-	 * The predefined namespace UUID for X.500 Distiguishing Names.
+	 * The predefined namespace UUID for X.500 Distinguishing Names.
 	 */
 	public const NAMESPACE_X500 = '6ba7b814-9dad-11d1-80b4-00c04fd430c8';
 
@@ -230,7 +216,7 @@ class Uuid implements \Stringable
 	/**
 	 * Constructor.
 	 *
-	 * Handling of the $input parameter varies depending on the $verion:
+	 * Handling of the $input parameter varies depending on the $version:
 	 *  - For v3 and v5, $input must be a string or \Stringable object to hash.
 	 *  - For v1, v6, and v7, $input can be a Unix timestamp, a parsable
 	 *    date string, a \DateTimeInterface object, or null to use current time.
@@ -422,7 +408,7 @@ class Uuid implements \Stringable
 	}
 
 	/**
-	 * Creates a instance of this class from an existing UUID string.
+	 * Creates an instance of this class from an existing UUID string.
 	 *
 	 * If the input UUID string is invalid, behaviour depends on the $strict
 	 * parameter:
@@ -554,7 +540,7 @@ class Uuid implements \Stringable
 	 * When the script is being executed from the command line, the URL will
 	 * take the form 'file://hostname/path/to/script.php'.
 	 *
-	 * See RFC 4122, section 4.3.
+	 * See RFC 9562, section 6.5.
 	 *
 	 * @param \Stringable|string|bool $ns Either a valid UUID, true to forcibly
 	 *    reset to the automatically generated default value, or false to use
@@ -622,7 +608,7 @@ class Uuid implements \Stringable
 		$scripturl = $scheme . '://' . trim($host, '/') . '/' . trim($path, '/');
 
 		// Temporarily set self::$namespace to the binary form of the predefined
-		// namespace UUID for URLs. (See RFC 4122, appendix C.)
+		// namespace UUID for URLs. (See RFC 9562, section 6.6.)
 		self::$namespace = hex2bin(str_replace('-', '', self::NAMESPACE_URL));
 
 		// Set self::$namespace to the binary UUIDv5 for $scripturl.
@@ -638,10 +624,7 @@ class Uuid implements \Stringable
 	 *
 	 * The 60-bit timestamp counts 100-nanosecond intervals since Oct 15, 1582,
 	 * at 0:00:00 UTC (the date when the Gregorian calendar went into effect).
-	 * The maximum date is Jun 18, 5623, at 21:21:00.6846975 UTC. (Note: In the
-	 * introduction section of RFC 4122, the maximum date is stated to be
-	 * "around A.D. 3400" but this appears to be errata. It would be true if the
-	 * timestamp were a signed integer, but in fact the timestamp is unsigned.)
+	 * The maximum date is Jun 18, 5623, at 21:21:00.6846975 UTC.
 	 *
 	 * Uniqueness is ensured by appending a "clock sequence" and a "node ID" to
 	 * the timestamp. The clock sequence is a randomly initialized value that
@@ -670,7 +653,7 @@ class Uuid implements \Stringable
 	 * UUIDv2: DCE security version. Suitable only for specific purposes and is
 	 * rarely used.
 	 *
-	 * RFC 4122 does not describe this version. It just reserves UUIDv2 for
+	 * RFC 9562 does not describe this version. It just reserves UUIDv2 for
 	 * "DCE Security version." Instead the specification for UUIDv2 can be found
 	 * in the DCE 1.1 Authentication and Security Services specification.
 	 *
@@ -898,7 +881,7 @@ class Uuid implements \Stringable
 		$timestamp = $this->adjustTimestamp();
 
 		// We can't track the clock sequence between executions, so initialize
-		// it to a random value each time. See RFC 4122, section 4.1.5.
+		// it to a random value each time. See RFC 9562, section 6.10.
 		if (!isset(self::$clock_seq[$this->version])) {
 			self::$clock_seq[$this->version] = bin2hex(random_bytes(2));
 		}
@@ -907,7 +890,7 @@ class Uuid implements \Stringable
 
 		// We don't have direct access to the MAC address in PHP, but the spec
 		// allows using random data instead, provided that we set the least
-		// significant bit of its first octet to 1. See RFC 4122, section 4.5.
+		// significant bit of its first octet to 1. See RFC 9562, section 6.10.
 		if (!isset(self::$node)) {
 			self::$node = sprintf('%012x', hexdec(bin2hex(random_bytes(6))) | 0x10000000000);
 		}
@@ -920,7 +903,7 @@ class Uuid implements \Stringable
 			// First try incrementing the timestamp.
 			// Because the spec uses 100-nanosecond intervals, but PHP offers
 			// only microseconds, the spec says we can do this to simulate
-			// greater precision. See RFC 4122, section 4.2.1.2.
+			// greater precision. See RFC 9562, section 6.1.
 			$temp = $timestamp;
 			for ($i = 0; $i < 9; $i++) {
 				if (!in_array(++$temp, self::$prev_timestamps[$this->version][$clock_seq])) {
@@ -993,7 +976,7 @@ class Uuid implements \Stringable
 	}
 
 	/**
-	 * Adjusts a Unix timestamp to meet the needs of the this UUID version.
+	 * Adjusts a Unix timestamp to meet the needs of this UUID version.
 	 *
 	 * @return int A timestamp value appropriate for this UUID version.
 	 */
