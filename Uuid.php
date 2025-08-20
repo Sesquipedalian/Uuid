@@ -363,7 +363,39 @@ class Uuid implements \Stringable
 	}
 
 	/**
+	 * Returns the variant of this UUID.
+	 *
+	 * The possible values are as follows, with descriptions taken from
+	 * RFC 9562:
+	 *
+	 *  0 => Reserved. Network Computing System (NCS) backward compatibility,
+	 *       and includes Nil UUID.
+	 *  1 => The variant specified in RFC 9562.
+	 *  2 => Reserved. Microsoft Corporation backward compatibility.
+	 *  3 => Reserved for future definition and includes Max UUID.
+	 *
+	 * In practice, variant 1 is the only UUID variant in use, apart from the
+	 * special cases of the Nil and Max UUIDs, which are the only examples of
+	 * variants 0 and 3 that one will ever encounter.
+	 *
+	 * @return int The variant of this UUID.
+	 */
+	public function getVariant(): int
+	{
+		$variant = hexdec(substr($this->uuid, 19, 1));
+
+		return match (true) {
+			$variant < 0x8 => 0,
+			$variant < 0xc => 1,
+			$variant < 0xe => 2,
+			default => 3,
+		};
+	}
+
+	/**
 	 * Returns the version of this UUID.
+	 *
+	 * This is only meaningful for variant 1 UUIDs.
 	 *
 	 * @return int The version of this UUID.
 	 */
@@ -469,17 +501,20 @@ class Uuid implements \Stringable
 			$hex = '00000000000000000000000000000000';
 		}
 
+		// Get the variant.
+		$variant = hexdec(substr($hex, 16, 1));
+
+		$variant = match (true) {
+			$variant < 0x8 => 0,
+			$variant < 0xc => 1,
+			$variant < 0xe => 2,
+			default => 3,
+		};
+
 		// Validate the version.
 		$version = hexdec(substr($hex, 12, 1));
 
-		if (
-			// Unknown version.
-			!in_array($version, self::KNOWN_VERSIONS)
-			// Version can be 0 only in Nil UUID.
-			|| ($version === 0 && $hex !== '00000000000000000000000000000000')
-			// Version can be 15 only in Max UUID.
-			|| ($version === 15 && $hex !== 'ffffffffffffffffffffffffffffffff')
-		) {
+		if ($variant === 1 && !\in_array($version, self::KNOWN_VERSIONS)) {
 			trigger_error("Invalid UUID string supplied: {$input}", $strict ? E_USER_ERROR : E_USER_WARNING);
 
 			$hex = '00000000000000000000000000000000';
