@@ -363,6 +363,35 @@ class Uuid implements \Stringable
 	}
 
 	/**
+	 * Returns the variant of this UUID.
+	 *
+	 * The possible values are as follows, with descriptions taken from
+	 * RFC 9562:
+	 *
+	 *  0 => Reserved. Network Computing System (NCS) backward compatibility,
+	 *       and includes Nil UUID.
+	 *  1 => The variant specified in RFC 9562.
+	 *  2 => Reserved. Microsoft Corporation backward compatibility.
+	 *  3 => Reserved for future definition and includes Max UUID.
+	 *
+	 * In practice, variant 1 is the only UUID variant in use, apart from the
+	 * special cases of the Nil and Max UUIDs, which are the only examples of
+	 * variants 0 and 3 that one will ever encounter.
+	 *
+	 * @return int The variant of this UUID.
+	 */
+	public function getVariant(): int
+	{
+		$hex = '0' . substr($this->uuid, 19, 1);
+
+		foreach ([3 => 0b1110, 2 => 0b1100, 1 => 0b1000, 0 => 0b0000] as $variant => $bin) {
+			if ((hexdec($hex) & $bin) === $bin) {
+				return $variant;
+			}
+		}
+	}
+
+	/**
 	 * Returns the version of this UUID.
 	 *
 	 * @return int The version of this UUID.
