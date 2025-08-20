@@ -20,9 +20,11 @@ representations for storage and other uses. In particular:
    representation of a UUID. This form maintains the same sort order as the
    full form and is the most space-efficient form possible.
 
- - The Uuid::getShortForm() method returns a customized base 64 encoding of
-   the binary form of the UUID. This form is 22 bytes long, maintains the
-   same sort order as the full form, and is URL safe.
+ - The Uuid::getShortForm() method returns a customized base 64 or base 32
+   encoding of the binary form of the UUID. Both short forms maintain the
+   same sort order as the full form and are URL safe. The base 64 form is 22
+   characters long. The base 32 form is 26 characters long, but contains only
+   digits and lowercase letters, which may be useful in some situations.
 
 For convenience, two static methods, Uuid::compress() and Uuid::expand(), are
 available in order to simplify the process of converting an existing UUID
