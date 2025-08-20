@@ -3,7 +3,7 @@
 /**
  * A simple PHP class for working with Universally Unique Identifiers (UUIDs).
  *
- * @version 1.3.0
+ * @version 1.4.0
  * @author Jon Stovell http://jon.stovell.info
  * @copyright 2024 Jon Stovell
  * @license MIT
@@ -84,6 +84,10 @@ namespace Sesquipedalian;
  */
 class Uuid implements \Stringable
 {
+	/*****************
+	 * Class constants
+	 *****************/
+
 	/**
 	 * Default UUID version to create.
 	 */
@@ -100,7 +104,7 @@ class Uuid implements \Stringable
 	 * UUID versions that this class will recognize as valid.
 	 *
 	 * Versions 0 and 15 refer to the special nil and max UUIDs.
-	 * Version 8 is for "experimental or vender-specific use cases."
+	 * Version 8 is for "experimental or vendor-specific use cases."
 	 */
 	public const KNOWN_VERSIONS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 15];
 
@@ -220,7 +224,7 @@ class Uuid implements \Stringable
 	protected static string $node;
 
 	/**
-	 * @var object
+	 * @var \DateTimeZone
 	 *
 	 * A \DateTimeZone object for UTC.
 	 */
@@ -776,7 +780,7 @@ class Uuid implements \Stringable
 	 * should always provide a value in $input['id'] rather than relying on
 	 * automatically determined values. ... Or better yet, don't use UUIDv2.
 	 *
-	 * @param array $input array
+	 * @param array $input Example: ['domain' => 0, 'id' => 123].
 	 * @throws \Exception if $input['domain'] is invalid.
 	 * @throws \Exception if $input['id'] is not set and cannot be determined
 	 *    automatically.
@@ -940,11 +944,13 @@ class Uuid implements \Stringable
 		// Date out of range? Bail out.
 		if ($timestamp < 0) {
 			$this->version = 0;
+
 			return str_replace('-', '', self::NIL_UUID);
 		}
 
 		if ($timestamp > 281474976710655) {
 			$this->version = 15;
+
 			return str_replace('-', '', self::MAX_UUID);
 		}
 
@@ -1005,11 +1011,13 @@ class Uuid implements \Stringable
 		// Date out of range? Bail out.
 		if ($timestamp < 0) {
 			$this->version = 0;
+
 			return [];
 		}
 
 		if ($timestamp > 1152921504606846975) {
 			$this->version = 15;
+
 			return [];
 		}
 
